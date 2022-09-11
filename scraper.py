@@ -3,6 +3,7 @@ from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
+from webdriver_manager.chrome import ChromeDriverManager
 
 
 DRIVER_PATH = r"C:\Users\BenSharkey\.wdm\drivers\chromedriver\win32\100.0.4896.60\chromedriver.exe"
@@ -14,8 +15,7 @@ PASSWORD_NAB = ""
 def initiate_chrome_driver(DRIVER_PATH):
     '''set up the chrome browser driver
     '''
-    s = Service(DRIVER_PATH)
-    driver = webdriver.Chrome(service=s)
+    driver = webdriver.Chrome(ChromeDriverManager().install())
     return driver
 
 
