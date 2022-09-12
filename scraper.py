@@ -6,7 +6,7 @@ from webdriver_manager.chrome import ChromeDriverManager
 
 
 DRIVER_PATH = r"C:\Users\BenSharkey\.wdm\drivers\chromedriver\win32\100.0.4896.60\chromedriver.exe"
-URL_NAB = ""
+URL_NAB = "https://equitylending.nab.com.au/Login.aspx"
 USERNAME_NAB = ""
 PASSWORD_NAB = ""
 
@@ -47,9 +47,43 @@ table_market_data = driver.find_element(by=By.ID, value='market-data')
 market_data_html = table_market_data.get_attribute('outerHTML')
 
 # scrape current_data to to html string
-table_current_data = driver.find_element(by=By.ID, value='current-data')
-current_data_html = table_current_data.get_attribute('outerHTML')
+table_summary_data = driver.find_element(by=By.ID, value='current-data')
+summary_data_html = table_summary_data.get_attribute('outerHTML')
+
+# click transactions link
+transactions = driver.find_element(by=By.ID, value='cBodyContainer_ctl00_hplFacilityTransactions')
+transactions.click()
+
+# scrape transactions to html string
+table_transactions = driver.find_element(by=By.ID, value='transaction-list')
+transactions_html = table_transactions.get_attribute('outerHTML')
+
+# click interest link
+interest = driver.find_element(by=By.ID, value='cBodyContainer_ctl00_hplSMSFInterest')
+interest.click()
+
+# scrape interest to html string
+table_interest = driver.find_element(by=By.ID, value='interest')
+interest_html = table_interest.get_attribute('outerHTML')
 
 
 
-driver.quit()
+
+
+
+
+# # write html strings to s3 files
+# tz = pytz.timezone('Australia/Melbourne')
+# filename = datetime.datetime.now(tz).strftime('%Y-%m-%d--%H-%M-%p') + '.txt'
+# market_data_html = market_data_html.encode('utf-8')
+# summary_data_html = summary_data_html.encode('utf-8')
+
+# client = boto3.client('s3')
+# client.put_object(Body=market_data_html, Bucket='account-balances-scraper', Key='market-data-html-raw/' + filename)
+# client.put_object(Body=summary_data_html, Bucket='account-balances-scraper', Key='summary-data-html-raw/' + filename)
+
+
+
+
+
+# driver.quit()
