@@ -58,6 +58,14 @@ transactions.click()
 table_transactions = driver.find_element(by=By.ID, value='transaction-list')
 transactions_html = table_transactions.get_attribute('outerHTML')
 
+# click loan details link
+loan_details = driver.find_element(by=By.ID, value='cBodyContainer_ctl00_hplFacilityLoanDetails')
+loan_details.click()
+
+# scrape loan details to html string
+loan_details = driver.find_element(by=By.ID, value='loan-control')
+loan_details_html = loan_details.get_attribute('outerHTML')
+
 # click interest link
 interest = driver.find_element(by=By.ID, value='cBodyContainer_ctl00_hplSMSFInterest')
 interest.click()
