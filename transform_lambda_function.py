@@ -111,7 +111,6 @@ def lambda_handler(event, context):
         # get date of tile and add it to a column in df
         filedate = obj.key.split('/')[1].split('--')[0]
         df_file.loc[:, 'File Date'] = filedate
-        print(df_file)
         
         # append dfs together
         df_transactions = pd.concat([df_transactions, df_file], axis=0)
