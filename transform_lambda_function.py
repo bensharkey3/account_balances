@@ -5,6 +5,9 @@ import boto3
 import os
 
 
+# os.environ["AWS_ACCESS_KEY_ID"] = ''
+# os.environ["AWS_SECRET_ACCESS_KEY"] = ''
+
 # AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
 # AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
 
@@ -117,3 +120,4 @@ def lambda_handler(event, context):
         df_transactions.reset_index(drop=True, inplace=True)
 
     # put transformed df's into a new bucket location
+    s3client.put_object(Body=df_marketdata, Bucket='account-balances-scraper', Key='transformed/' + filename)
