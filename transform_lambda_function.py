@@ -1,8 +1,8 @@
 import json
 import pandas as pd
-import lxml
 import boto3
 import os
+from io import StringIO
 
 
 # os.environ["AWS_ACCESS_KEY_ID"] = ''
@@ -119,5 +119,24 @@ def lambda_handler(event, context):
         df_transactions = pd.concat([df_transactions, df_file], axis=0)
         df_transactions.reset_index(drop=True, inplace=True)
 
+
     # put transformed df's into a new bucket location
-    s3client.put_object(Body=df_marketdata, Bucket='account-balances-scraper', Key='transformed/' + filename)
+    csv_buffer_marketdata = StringIO()
+    df_marketdata.to_csv(csv_buffer_marketdata)
+    s3resource.Object(bucket_name, 'transformed/' + 'marketdata.csv').put(Body=csv_buffer_marketdata.getvalue())
+
+    csv_buffer_interest = StringIO()
+    df_interest.to_csv(csv_buffer_interest)
+    s3resource.Object(bucket_name, 'transformed/' + 'interest.csv').put(Body=csv_buffer_interest.getvalue())
+
+    csv_buffer_loandetails = StringIO()
+    df_loandetails.to_csv(csv_buffer_loandetails)
+    s3resource.Object(bucket_name, 'transformed/' + 'loandetails.csv').put(Body=csv_buffer_loandetails.getvalue())
+
+    csv_buffer_summarydata = StringIO()
+    df_summarydata.to_csv(csv_buffer_summarydata)
+    s3resource.Object(bucket_name, 'transformed/' + 'summarydata.csv').put(Body=csv_buffer_summarydata.getvalue())
+
+    csv_buffer_transactions = StringIO()
+    df_transactions.to_csv(csv_buffer_transactions)
+    s3resource.Object(bucket_name, 'transformed/' + 'transactions.csv').put(Body=csv_buffer_transactions.getvalue())
