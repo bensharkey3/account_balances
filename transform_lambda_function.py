@@ -5,22 +5,22 @@ import os
 from io import StringIO
 
 
-# os.environ["AWS_ACCESS_KEY_ID"] = ''
-# os.environ["AWS_SECRET_ACCESS_KEY"] = ''
-
-# AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
-# AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
-
-s3client = boto3.client('s3')
-
-# s3client = boto3.client(
-#     "s3",
-#     aws_access_key_id=AWS_ACCESS_KEY_ID,
-#     aws_secret_access_key=AWS_SECRET_ACCESS_KEY
-
-
 def lambda_handler(event, context):
-    
+
+    # os.environ["AWS_ACCESS_KEY_ID"] = ''
+    # os.environ["AWS_SECRET_ACCESS_KEY"] = ''
+
+    # AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
+    # AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
+
+    s3client = boto3.client('s3')
+
+    # s3client = boto3.client(
+    #     "s3",
+    #     aws_access_key_id=AWS_ACCESS_KEY_ID,
+    #     aws_secret_access_key=AWS_SECRET_ACCESS_KEY
+    #       )
+
     bucket_name = 'account-balances-scraper'
 
     # get all object keys in bucket
@@ -118,6 +118,15 @@ def lambda_handler(event, context):
         # append dfs together
         df_transactions = pd.concat([df_transactions, df_file], axis=0)
         df_transactions.reset_index(drop=True, inplace=True)
+
+    # final cleaning before writing to s3
+    # rename columns
+    df_summarydata.rename(columns={0: 'Measure', 1: 'Value'}, inplace=True)
+
+    # change data type
+    df_marketdata['Market Value'] = df_marketdata['Market Value'].replace({'\$':''}, regex = True)
+    df_marketdata['Market Value'] = df_marketdata['Market Value'].replace({'\,':''}, regex = True)
+    df_marketdata['Market Value'] = df_marketdata['Market Value'].astype('float')
 
 
     # put transformed df's into a new bucket location
