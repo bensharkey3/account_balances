@@ -2,45 +2,13 @@ AWSTemplateFormatVersion: '2010-09-09'
 Description: account-balances webscraping lambda function.
 
 Resources:
-  AccountBalancesScraperLambda:
+  AccountBalancesTransformLambda:
     Type: AWS::Lambda::Function
     Properties:
-      FunctionName: account-balances-scraper
-      Description: "runs a lambda for account-balances"
+      FunctionName: account-balances-transform
+      Description: "runs a lambda for account-balances-transform"
       Runtime: python3.8
-      Handler: account_balances_scraper.lambda_function
+      Handler: account_balances_transform.lambda_function
       Timeout: 600
       Role: arn:aws:iam::537808241319:role/service-role/account_balances_scraper_role
       Code:
-  #       S3Bucket: lambda-cloudformation-sourcecode-bucket
-  #       S3Key: "riotinto-qualification-compliance/scraper.zip"
-  #     Layers: 
-  #       - "arn:aws:lambda:ap-southeast-2:770693421928:layer:Klayers-p38-pandas:8"
-  #       - "arn:aws:lambda:ap-southeast-2:770693421928:layer:Klayers-p38-numpy:7"
-  #       - "arn:aws:lambda:ap-southeast-2:770693421928:layer:Klayers-p38-requests:7"
-  #       - "arn:aws:lambda:ap-southeast-2:770693421928:layer:Klayers-p38-beautifulsoup4:1"
-
-  # ScheduledRule: 
-  #   Type: AWS::Events::Rule
-  #   Properties: 
-  #     Description: "ScheduledRule"
-  #     ScheduleExpression: "cron(0 22 ? * MON-FRI *)"
-  #     State: "ENABLED"
-  #     Targets: 
-  #       - 
-  #         Arn: 
-  #           Fn::GetAtt: 
-  #             - "RiotintoQualificationComplianceLambda"
-  #             - "Arn"
-  #         Id: "RiotintoQualificationComplianceLambda"
-          
-  # PermissionForEventsToInvokeLambda: 
-  #   Type: AWS::Lambda::Permission
-  #   Properties: 
-  #     FunctionName: !Ref "RiotintoQualificationComplianceLambda"
-  #     Action: "lambda:InvokeFunction"
-  #     Principal: "events.amazonaws.com"
-  #     SourceArn: 
-  #       Fn::GetAtt: 
-  #         - "ScheduledRule"
-  #         - "Arn"
