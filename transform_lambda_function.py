@@ -27,6 +27,9 @@ def lambda_handler(event, context):
     s3resource = boto3.resource('s3')
     bucket = s3resource.Bucket(bucket_name)
 
+    # get SNS arn
+    SNS_ARN = os.environ['SNS_ARN']
+
 
     # create marketdata df
     df_marketdata = pd.DataFrame(columns=['Code', 'Security Name', 'Units', 'Price', 'Market Value',
@@ -149,3 +152,9 @@ def lambda_handler(event, context):
     csv_buffer_transactions = StringIO()
     df_transactions.to_csv(csv_buffer_transactions)
     s3resource.Object(bucket_name, 'transformed/' + 'transactions.csv').put(Body=csv_buffer_transactions.getvalue())
+
+    # send email using SNS
+    snsclient = boto3.client('sns')
+    response = client.publish(
+        TopicArn=SNS_ARN,
+        Message='this is a test message... testing 1,2,3...')

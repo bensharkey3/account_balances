@@ -1,5 +1,6 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: account-balances webscraping lambda function.
+Description: account-balances webscraping template.
+
 
 Resources:
   AccountBalancesTransformLambda:
@@ -8,7 +9,22 @@ Resources:
       FunctionName: account-balances-transform
       Description: "runs a lambda for account-balances-transform"
       Runtime: python3.8
-      Handler: account_balances_transform.lambda_function
+      Handler: transform.lambda_handler
       Timeout: 600
       Role: arn:aws:iam::537808241319:role/service-role/account_balances_scraper_role
       Code:
+        S3Bucket: lambda-cloudformation-sourcecode-bucket
+        S3Key: "account-balances/transform.zip"
+      Layers: 
+        - "arn:aws:lambda:ap-southeast-2:770693421928:layer:Klayers-p38-pandas:8"
+        - "arn:aws:lambda:ap-southeast-2:770693421928:layer:Klayers-p38-lxml:3"
+      Environment:
+        Variables:
+          SNS_ARN = !Ref "SNSEmail"
+  
+  SNSEmail:
+    Type: AWS::SNS::Topic
+    Properties:
+    Subscription:
+      - Endpoint: bensharkey3@gmail.com
+        Protocol: email
