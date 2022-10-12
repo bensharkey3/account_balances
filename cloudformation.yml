@@ -24,6 +24,7 @@ Resources:
   
   SNSEmail:
     Type: AWS::SNS::Topic
-    Subscription:
-      - Endpoint: bensharkey3@gmail.com
-        Protocol: email
+    Properties:
+      Subscription:
+        - Endpoint: bensharkey3@gmail.com
+          Protocol: email
