@@ -185,6 +185,7 @@ def lambda_handler(event, context):
         df_summarydata['File Date'].sort_values(ascending=False).iloc[0]).strftime('%Y-%m-%d')
 
     todays_date = datetime.today().strftime('%Y-%m-%d')
+    yesterdays_date = (datetime.today() - timedelta(days=1)).strftime('%Y-%m-%d')
 
     if data_updated == todays_date:
         data_message = f'Data up to date for today: {data_updated}'
@@ -232,8 +233,10 @@ def lambda_handler(event, context):
 
     summarydata_temp = df_summarydata[df_summarydata['Measure'] == 'Net Equity'].sort_values(by='File Date', ascending=False)
     summarydata_temp['Value'] = convert_value_col(summarydata_temp['Value'])
+
     todays_date = summarydata_temp['File Date'].iloc[0]
     days_ago7 = summarydata_temp['File Date'].iloc[0] - pd.to_timedelta(7, unit='d')
+
     summarydata_temp = summarydata_temp[summarydata_temp['File Date'].isin([days_ago7, todays_date])]
     summarydata_temp['value_diff'] = summarydata_temp['Value'].diff(periods=-1)
     summarydata_temp['diff_percent'] = summarydata_temp['value_diff']*100 / summarydata_temp['Value'].iloc[1]
