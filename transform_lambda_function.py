@@ -230,11 +230,34 @@ def lambda_handler(event, context):
     proportion_of_yr = summarydata_ann_rate['date_diff'].iloc[0].days / 365
     annualised_return = round(value_diff*100 / proportion_of_yr, 1)
 
+    summarydata_temp = df_summarydata[df_summarydata['Measure'] == 'Net Equity'].sort_values(by='File Date', ascending=False)
+    summarydata_temp['Value'] = convert_value_col(summarydata_temp['Value'])
+    todays_date = summarydata_temp['File Date'].iloc[0]
+    days_ago7 = summarydata_temp['File Date'].iloc[0] - pd.to_timedelta(7, unit='d')
+    summarydata_temp = summarydata_temp[summarydata_temp['File Date'].isin([days_ago7, todays_date])]
+    summarydata_temp['value_diff'] = summarydata_temp['Value'].diff(periods=-1)
+    summarydata_temp['diff_percent'] = summarydata_temp['value_diff']*100 / summarydata_temp['Value'].iloc[1]
+    summarydata_7day_diff_amount = round(summarydata_temp['value_diff'].iloc[0], 2)
+    summarydata_7day_diff_percent = round(summarydata_temp['diff_percent'].iloc[0], 2)
+
+    summarydata_temp = df_summarydata[df_summarydata['Measure'] == 'Net Equity'].sort_values(by='File Date', ascending=False)
+    summarydata_temp['Value'] = convert_value_col(summarydata_temp['Value'])
+    todays_date = summarydata_temp['File Date'].iloc[0]
+    days_ago30 = summarydata_temp['File Date'].iloc[0] - pd.to_timedelta(30, unit='d')
+    summarydata_temp = summarydata_temp[summarydata_temp['File Date'].isin([days_ago30, todays_date])]
+    summarydata_temp['value_diff'] = summarydata_temp['Value'].diff(periods=-1)
+    summarydata_temp['diff_percent'] = summarydata_temp['value_diff']*100 / summarydata_temp['Value'].iloc[1]
+    summarydata_30day_diff_amount = round(summarydata_temp['value_diff'].iloc[0], 2)
+    summarydata_30day_diff_percent = round(summarydata_temp['diff_percent'].iloc[0], 2)
+
+
     message = f'''
     {data_message}
 
     Total Equity: {summarydata_daily_equity_amount}
     - daily diff: {summarydata_daily_diff_amount} ({summarydata_daily_diff_percent}%)
+    - 7 day diff: {summarydata_7day_diff_amount} ({summarydata_7day_diff_percent}%)
+    - 30 day diff: {summarydata_30day_diff_amount} ({summarydata_30day_diff_percent}%)
 
     Annualised equity growth since inception: {annualised_return}%
 
