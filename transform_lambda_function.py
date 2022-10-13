@@ -3,6 +3,7 @@ import pandas as pd
 import boto3
 import os
 from io import StringIO
+from datetime import datetime
 
 
 def lambda_handler(event, context):
@@ -122,14 +123,37 @@ def lambda_handler(event, context):
         df_transactions = pd.concat([df_transactions, df_file], axis=0)
         df_transactions.reset_index(drop=True, inplace=True)
 
+
     # final cleaning before writing to s3
     # rename columns
     df_summarydata.rename(columns={0: 'Measure', 1: 'Value'}, inplace=True)
 
-    # change data type
-    df_marketdata['Market Value'] = df_marketdata['Market Value'].replace({'\$':''}, regex = True)
-    df_marketdata['Market Value'] = df_marketdata['Market Value'].replace({'\,':''}, regex = True)
-    df_marketdata['Market Value'] = df_marketdata['Market Value'].astype('float')
+    # convert column types
+    def convert_value_col(df_col):
+        '''change data type from dollars in string to float
+        '''
+        df_col = df_col.replace({'\$':''}, regex = True)
+        df_col = df_col.replace({'\,':''}, regex = True)
+        df_col = df_col.astype('float')
+        return df_col
+        
+
+    df_transactions.replace(to_replace="No transaction data found for this facility ID.", value=None, inplace=True)
+
+    df_marketdata['Market Value'] = convert_value_col(df_marketdata['Market Value'])
+    df_marketdata['Price'] = convert_value_col(df_marketdata['Price'])
+    df_marketdata['Security Value'] = convert_value_col(df_marketdata['Security Value'])
+    df_interest['Interest Charged'] = convert_value_col(df_interest['Interest Charged'])
+    df_interest['Interest Earned'] = convert_value_col(df_interest['Interest Earned'])
+    df_transactions['Credit'] = convert_value_col(df_transactions['Credit'])
+    df_transactions['Balance'] = convert_value_col(df_transactions['Balance'])
+
+    df_summarydata['File Date'] = pd.to_datetime(df_summarydata['File Date'])
+    df_marketdata['File Date'] = pd.to_datetime(df_marketdata['File Date'])
+    df_interest['File Date'] = pd.to_datetime(df_interest['File Date'])
+    df_summarydata['File Date'] = pd.to_datetime(df_summarydata['File Date'])
+    df_loandetails['File Date'] = pd.to_datetime(df_loandetails['File Date'])
+    df_transactions['File Date'] = pd.to_datetime(df_transactions['File Date'])
 
 
     # put transformed df's into a new bucket location
@@ -153,9 +177,37 @@ def lambda_handler(event, context):
     df_transactions.to_csv(csv_buffer_transactions)
     s3resource.Object(bucket_name, 'transformed/' + 'transactions.csv').put(Body=csv_buffer_transactions.getvalue())
 
-    # send email using SNS
-    message = 'line one' + '\n' + 'line two' + '\n' + 'line three'
+    # create email message body
+    data_updated = min(df_marketdata['File Date'].iloc[0],
+        df_interest['File Date'].iloc[0],
+        df_loandetails['File Date'].iloc[0],
+        df_transactions['File Date'].iloc[0],
+        df_summarydata['File Date'].iloc[0]).strftime('%Y-%m-%d')
 
+    todays_date = datetime.today().strftime('%Y-%m-%d')
+
+    if data_updated == todays_date:
+        data_message = 'Data up to date for today'
+    else:
+        data_message = f'ERROR - data out of date, most recent date: {data_updated}, todays date: {todays_date}'
+
+    summarydata_temp = df_summarydata[df_summarydata['Measure'] == 'Net Equity'].sort_values(by='File Date', ascending=False).head(5)
+    summarydata_temp['Value'] = convert_value_col(summarydata_temp['Value'])
+    summarydata_temp['diff'] = summarydata_temp['Value'].diff(periods=-1)
+    summarydata_temp['percent_change'] = summarydata_temp['diff']*100 / summarydata_temp['Value']
+    summarydata_daily_diff_amount = round(summarydata_temp['diff'].iloc[0], 2)
+    summarydata_daily_diff_percent = round(summarydata_temp['percent_change'].iloc[0], 2)
+    summarydata_daily_equity_amount = summarydata_temp['Value'].iloc[0]
+
+    message = f'''
+        {data_message}
+        
+        Total Equity: {summarydata_daily_equity_amount}
+        - daily diff: {summarydata_daily_diff_amount}
+        - daily diff %: {summarydata_daily_diff_percent}
+        '''
+
+    # send email using SNS
     snsclient = boto3.client('sns')
     response = snsclient.publish(
         TopicArn=SNS_ARN,
