@@ -5,7 +5,9 @@ import os
 from io import StringIO
 
 
-def lambda_handler(event, context):
+def main():
+    '''defines main function
+    '''
 
     # os.environ["AWS_ACCESS_KEY_ID"] = ''
     # os.environ["AWS_SECRET_ACCESS_KEY"] = ''
@@ -155,6 +157,10 @@ def lambda_handler(event, context):
 
     # send email using SNS
     snsclient = boto3.client('sns')
-    response = client.publish(
+    response = snsclient.publish(
         TopicArn=SNS_ARN,
         Message='this is a test message... testing 1,2,3...')
+
+
+def lambda_handler(event, context):
+    main()
