@@ -199,15 +199,51 @@ def lambda_handler(event, context):
     summarydata_daily_diff_percent = round(summarydata_temp['percent_change'].iloc[0], 2)
     summarydata_daily_equity_amount = summarydata_temp['Value'].iloc[0]
 
+    loandetails_temp = df_loandetails.sort_values(by='File Date', ascending=False).head(10)
+    loandetails_temp['Interest Rate'] = loandetails_temp['Interest Rate'].str.replace('%', '')
+    loandetails_temp['Interest Rate'] = loandetails_temp['Interest Rate'].astype(float)
+    loandetails_temp['rate_diff'] = loandetails_temp['Interest Rate'].diff(periods=-1)
+    loandetails_daily_diff_rate = loandetails_temp['rate_diff'].iloc[0]
+
+    if loandetails_daily_diff_rate != 0:
+        ir_message = f"Interest rate has increased by {loandetails_daily_diff_rate}%"
+    else:
+        ir_message = ""
+
+    summarydata_loan = df_summarydata[df_summarydata['Measure'] == 'Loan Value'].sort_values(by='File Date', ascending=False).head(5)
+    summarydata_loan['Value'] = convert_value_col(summarydata_loan['Value'])
+    summarydata_loan['Value'] = summarydata_loan['Value'].astype(float)
+    summarydata_loan['value_diff'] = summarydata_loan['Value'].diff(periods=-1)
+    summarydata_loan_daily_diff = summarydata_loan['value_diff'].iloc[0]
+
+    if summarydata_loan_daily_diff != 0:
+        loan_message = f"Loan amount reduced by {summarydata_loan_daily_diff*-1}"
+    else:
+        loan_message = ""
+
+    summarydata_ann_rate = df_summarydata[df_summarydata['Measure'] == 'Net Equity'].sort_values(by='File Date', ascending=False)
+    summarydata_ann_rate = summarydata_ann_rate.iloc[[0, -1]]
+    summarydata_ann_rate['Value'] = convert_value_col(summarydata_ann_rate['Value'])
+    summarydata_ann_rate['value_diff'] = summarydata_ann_rate['Value'].diff(periods=-1)
+    summarydata_ann_rate['date_diff'] = summarydata_ann_rate['File Date'].diff(periods=-1)
+    value_diff = (summarydata_ann_rate['value_diff'] / summarydata_ann_rate['Value']).iloc[0]
+    proportion_of_yr = summarydata_ann_rate['date_diff'].iloc[0].days / 365
+    annualised_return = round(value_diff*100 / proportion_of_yr, 1)
+
     message = f'''
-{data_message}
+    {data_message}
 
-Total Equity: {summarydata_daily_equity_amount}
-- daily diff: {summarydata_daily_diff_amount}
-- daily diff %: {summarydata_daily_diff_percent}
+    Total Equity: {summarydata_daily_equity_amount}
+    - daily diff: {summarydata_daily_diff_amount} ({summarydata_daily_diff_percent}%)
+
+    Annualised equity growth since inception: {annualised_return}%
+
+    {ir_message}
+    {loan_message}
 
 
-        '''
+
+    '''
 
     # send email using SNS
     snsclient = boto3.client('sns')
