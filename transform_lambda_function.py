@@ -159,6 +159,7 @@ def lambda_handler(event, context):
     snsclient = boto3.client('sns')
     response = snsclient.publish(
         TopicArn=SNS_ARN,
+        Subject='account-balances'
         Message=message)
 
 
