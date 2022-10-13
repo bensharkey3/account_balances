@@ -178,11 +178,11 @@ def lambda_handler(event, context):
     s3resource.Object(bucket_name, 'transformed/' + 'transactions.csv').put(Body=csv_buffer_transactions.getvalue())
 
     # create email message body
-    data_updated = min(df_marketdata['File Date'].iloc[0],
-        df_interest['File Date'].iloc[0],
-        df_loandetails['File Date'].iloc[0],
-        df_transactions['File Date'].iloc[0],
-        df_summarydata['File Date'].iloc[0]).strftime('%Y-%m-%d')
+    data_updated = min(df_marketdata['File Date'].sort_values(ascending=False).iloc[0],
+        df_interest['File Date'].sort_values(ascending=False).iloc[0],
+        df_loandetails['File Date'].sort_values(ascending=False).iloc[0],
+        df_transactions['File Date'].sort_values(ascending=False).iloc[0],
+        df_summarydata['File Date'].sort_values(ascending=False).iloc[0]).strftime('%Y-%m-%d')
 
     todays_date = datetime.today().strftime('%Y-%m-%d')
 
