@@ -5,9 +5,7 @@ import os
 from io import StringIO
 
 
-def main():
-    '''defines main function
-    '''
+def lambda_handler(event, context):
 
     # os.environ["AWS_ACCESS_KEY_ID"] = ''
     # os.environ["AWS_SECRET_ACCESS_KEY"] = ''
@@ -162,5 +160,7 @@ def main():
         Message='this is a test message... testing 1,2,3...')
 
 
-def lambda_handler(event, context):
-    main()
+    return {
+        'statusCode': 200,
+        'body': json.dumps(response)
+    }
