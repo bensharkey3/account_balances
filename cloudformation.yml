@@ -9,22 +9,47 @@ Resources:
       FunctionName: account-balances-transform
       Description: "runs a lambda for account-balances-transform"
       Runtime: python3.8
-      Handler: transform.lambda_handler
+      Handler: transform_lambda_function.lambda_handler
       Timeout: 600
       Role: arn:aws:iam::537808241319:role/service-role/account_balances_scraper_role
       Code:
         S3Bucket: lambda-cloudformation-sourcecode-bucket
-        S3Key: "account-balances/transform.zip"
+        S3Key: "account-balances/transform_lambda_function.zip"
       Layers: 
         - "arn:aws:lambda:ap-southeast-2:770693421928:layer:Klayers-p38-pandas:8"
         - "arn:aws:lambda:ap-southeast-2:770693421928:layer:Klayers-p38-lxml:3"
       Environment:
-        Variables:
-          SNS_ARN = !Ref "SNSEmail"
+        Variables: 
+          SNS_ARN: !Ref "SNSTopicEmail"
+
+  ScheduledRule: 
+    Type: AWS::Events::Rule
+    Properties: 
+      Description: "ScheduledRule"
+      ScheduleExpression: "cron(0 9 ? * MON-FRI *)"
+      State: "ENABLED"
+      Targets: 
+        - 
+          Arn: 
+            Fn::GetAtt: 
+              - "AccountBalancesTransformLambda"
+              - "Arn"
+          Id: "AccountBalancesTransformLambda"
+          
+  PermissionForEventsToInvokeLambda: 
+    Type: AWS::Lambda::Permission
+    Properties: 
+      FunctionName: !Ref "AccountBalancesTransformLambda"
+      Action: "lambda:InvokeFunction"
+      Principal: "events.amazonaws.com"
+      SourceArn: 
+        Fn::GetAtt: 
+          - "ScheduledRule"
+          - "Arn"
   
-  SNSEmail:
+  SNSTopicEmail:
     Type: AWS::SNS::Topic
     Properties:
       Subscription:
-        - Endpoint: bensharkey3@gmail.com
-          Protocol: email
+        - Endpoint: "bensharkey3@gmail.com"
+          Protocol: "email"
