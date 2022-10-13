@@ -1,13 +1,20 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: account-balances webscraping template.
 
+Parameters:
+  Environment:
+    Type: String
+    Description: Select the appropriate environment
+    AllowedValues:
+      - dev
+      - prod
 
 Resources:
   AccountBalancesTransformLambda:
     Type: AWS::Lambda::Function
     Properties:
-      FunctionName: account-balances-transform
-      Description: "runs a lambda for account-balances-transform"
+      FunctionName: !Sub account-balances-transform-${Environment}
+      Description: !Sub "runs a lambda for account-balances-transform in ${Environment} environment"
       Runtime: python3.8
       Handler: transform_lambda_function.lambda_handler
       Timeout: 600
