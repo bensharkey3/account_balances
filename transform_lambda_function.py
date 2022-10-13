@@ -187,7 +187,7 @@ def lambda_handler(event, context):
     todays_date = datetime.today().strftime('%Y-%m-%d')
 
     if data_updated == todays_date:
-        data_message = 'Data up to date for today'
+        data_message = f'Data up to date for today: {data_updated}'
     else:
         data_message = f'ERROR - data out of date, most recent date: {data_updated}, todays date: {todays_date}'
 
@@ -200,11 +200,13 @@ def lambda_handler(event, context):
     summarydata_daily_equity_amount = summarydata_temp['Value'].iloc[0]
 
     message = f'''
-        {data_message}
-        
-        Total Equity: {summarydata_daily_equity_amount}
-        - daily diff: {summarydata_daily_diff_amount}
-        - daily diff %: {summarydata_daily_diff_percent}
+{data_message}
+
+Total Equity: {summarydata_daily_equity_amount}
+- daily diff: {summarydata_daily_diff_amount}
+- daily diff %: {summarydata_daily_diff_percent}
+
+
         '''
 
     # send email using SNS
