@@ -154,10 +154,12 @@ def lambda_handler(event, context):
     s3resource.Object(bucket_name, 'transformed/' + 'transactions.csv').put(Body=csv_buffer_transactions.getvalue())
 
     # send email using SNS
+    message = 'line one' + '\n' + 'line two' + '\n' + 'line three'
+
     snsclient = boto3.client('sns')
     response = snsclient.publish(
         TopicArn=SNS_ARN,
-        Message='this is a test message... testing 1,2,3...')
+        Message=message)
 
 
     return {
