@@ -21,6 +21,11 @@ def as_currency(amount):
     else:
         return "-${:,.0f}".format(-amount)
 
+
+def units_message_str(code, units, units_change):
+    units_message = f"Units added {code}:  {units} (+{units_change})"
+    return units_message
+
     
 def lambda_handler(event, context):
 
@@ -214,7 +219,7 @@ def lambda_handler(event, context):
     loandetails_daily_diff_rate = loandetails_temp['rate_diff'].iloc[0]
 
     if loandetails_daily_diff_rate != 0:
-        ir_message = f"Interest rate has increased by {loandetails_daily_diff_rate}%"
+        ir_message = f"Interest rate has increased by:  {loandetails_daily_diff_rate}%"
     else:
         ir_message = ""
 
@@ -225,7 +230,7 @@ def lambda_handler(event, context):
     summarydata_loan_daily_diff = summarydata_loan['value_diff'].iloc[0]
 
     if summarydata_loan_daily_diff != 0:
-        loan_message = f"Loan amount reduced by {as_currency(summarydata_loan_daily_diff*-1)}"
+        loan_message = f"Loan amount reduced by:  {as_currency(summarydata_loan_daily_diff*-1)}"
     else:
         loan_message = ""
 
@@ -253,6 +258,7 @@ def lambda_handler(event, context):
     summarydata_temp = df_summarydata[df_summarydata['Measure'] == 'Net Equity'].sort_values(by='File Date', ascending=False)
     summarydata_temp['Value'] = convert_value_col(summarydata_temp['Value'])
     todays_date = summarydata_temp['File Date'].iloc[0]
+    yesterdays_date = todays_date - timedelta(days=1)
     days_ago30 = summarydata_temp['File Date'].iloc[0] - pd.to_timedelta(30, unit='d')
     summarydata_temp = summarydata_temp[summarydata_temp['File Date'].isin([days_ago30, todays_date])]
     summarydata_temp['value_diff'] = summarydata_temp['Value'].diff(periods=-1)
@@ -260,23 +266,35 @@ def lambda_handler(event, context):
     summarydata_30day_diff_amount = round(summarydata_temp['value_diff'].iloc[0], 2)
     summarydata_30day_diff_percent = round(summarydata_temp['diff_percent'].iloc[0], 2)
 
+    marketdata_sorted = df_marketdata[df_marketdata['File Date'].isin([todays_date, yesterdays_date])]
+    marketdata_sorted['Units'] = marketdata_sorted['Units'].astype(int)
+    marketdata_sorted.sort_values(by=['Security Name', 'File Date'], ascending=False, inplace=True)
+    marketdata_sorted['units_yesterday'] = marketdata_sorted.groupby('Security Name')['Units'].shift(-1)   # change to Units (Price)
+    marketdata_sorted = marketdata_sorted[marketdata_sorted['File Date'] == todays_date]
+    marketdata_sorted['units_change'] = marketdata_sorted['Units'] - marketdata_sorted['units_yesterday']
+    marketdata_sorted = marketdata_sorted[marketdata_sorted['units_change'] != 0]
+
+    units_message = [units_message_str(x, y, z) for x, y, z in zip(marketdata_sorted['Code'], marketdata_sorted['Units'], marketdata_sorted['units_change'])]
+
+    units_message_string = """
+{}
+    """.format("\n".join(units_message[1:]))
+
 
     message = f'''
-    {data_message}
+{data_message}
 
-    Total Equity: {as_currency(summarydata_daily_equity_amount)}
-    - daily diff: {as_currency(summarydata_daily_diff_amount)} ({summarydata_daily_diff_percent}%)
-    - 7 day diff: {as_currency(summarydata_7day_diff_amount)} ({summarydata_7day_diff_percent}%)
-    - 30 day diff: {as_currency(summarydata_30day_diff_amount)} ({summarydata_30day_diff_percent}%)
+Total Equity:  {as_currency(summarydata_daily_equity_amount)}
+- daily diff:  {as_currency(summarydata_daily_diff_amount)} ({summarydata_daily_diff_percent}%)
+- 7 day diff:  {as_currency(summarydata_7day_diff_amount)} ({summarydata_7day_diff_percent}%)
+- 30 day diff:  {as_currency(summarydata_30day_diff_amount)} ({summarydata_30day_diff_percent}%)
 
-    Annualised equity growth since inception: {annualised_return}%
-
-    {ir_message}
-    {loan_message}
-
-
-
+Annualised equity growth since inception: {annualised_return}%
+{ir_message}
+{loan_message}
     '''
+
+    message += units_message_string
 
     # send email using SNS
     snsclient = boto3.client('sns')
