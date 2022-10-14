@@ -280,7 +280,6 @@ def lambda_handler(event, context):
 {}
     """.format("\n".join(units_message[1:]))
 
-
     message = f'''
 {data_message}
 
@@ -289,12 +288,11 @@ Total Equity:  {as_currency(summarydata_daily_equity_amount)}
 - 7 day diff:  {as_currency(summarydata_7day_diff_amount)} ({summarydata_7day_diff_percent}%)
 - 30 day diff:  {as_currency(summarydata_30day_diff_amount)} ({summarydata_30day_diff_percent}%)
 
-Annualised equity growth since inception: {annualised_return}%
+Annualised equity growth since inception:  {annualised_return}%
 {ir_message}
 {loan_message}
+{units_message_string}
     '''
-
-    message += units_message_string
 
     # send email using SNS
     snsclient = boto3.client('sns')
