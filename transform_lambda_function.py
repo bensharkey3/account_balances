@@ -23,7 +23,7 @@ def as_currency(amount):
 
 
 def units_message_str(code, units, units_change):
-    units_message = f"Units added {code}:  {units} (+{units_change})"
+    units_message = f"Units added today  {code}:  {units} (+{units_change})"
     return units_message
 
     
