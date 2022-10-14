@@ -6,6 +6,22 @@ from io import StringIO
 from datetime import datetime, timedelta
 
 
+def convert_value_col(df_col):
+    '''change data type from dollars in string to float
+    '''
+    df_col = df_col.replace({'\$':''}, regex = True)
+    df_col = df_col.replace({'\,':''}, regex = True)
+    df_col = df_col.astype('float')
+    return df_col
+
+
+def as_currency(amount):
+    if amount >= 0:
+        return "${:,.0f}".format(amount)
+    else:
+        return "-${:,.0f}".format(-amount)
+
+    
 def lambda_handler(event, context):
 
     # os.environ["AWS_ACCESS_KEY_ID"] = ''
@@ -129,15 +145,6 @@ def lambda_handler(event, context):
     df_summarydata.rename(columns={0: 'Measure', 1: 'Value'}, inplace=True)
 
     # convert column types
-    def convert_value_col(df_col):
-        '''change data type from dollars in string to float
-        '''
-        df_col = df_col.replace({'\$':''}, regex = True)
-        df_col = df_col.replace({'\,':''}, regex = True)
-        df_col = df_col.astype('float')
-        return df_col
-        
-
     df_transactions.replace(to_replace="No transaction data found for this facility ID.", value=None, inplace=True)
 
     df_marketdata['Market Value'] = convert_value_col(df_marketdata['Market Value'])
@@ -218,7 +225,7 @@ def lambda_handler(event, context):
     summarydata_loan_daily_diff = summarydata_loan['value_diff'].iloc[0]
 
     if summarydata_loan_daily_diff != 0:
-        loan_message = f"Loan amount reduced by {summarydata_loan_daily_diff*-1}"
+        loan_message = f"Loan amount reduced by {as_currency(summarydata_loan_daily_diff*-1)}"
     else:
         loan_message = ""
 
@@ -257,10 +264,10 @@ def lambda_handler(event, context):
     message = f'''
     {data_message}
 
-    Total Equity: {summarydata_daily_equity_amount}
-    - daily diff: {summarydata_daily_diff_amount} ({summarydata_daily_diff_percent}%)
-    - 7 day diff: {summarydata_7day_diff_amount} ({summarydata_7day_diff_percent}%)
-    - 30 day diff: {summarydata_30day_diff_amount} ({summarydata_30day_diff_percent}%)
+    Total Equity: {as_currency(summarydata_daily_equity_amount)}
+    - daily diff: {as_currency(summarydata_daily_diff_amount)} ({summarydata_daily_diff_percent}%)
+    - 7 day diff: {as_currency(summarydata_7day_diff_amount)} ({summarydata_7day_diff_percent}%)
+    - 30 day diff: {as_currency(summarydata_30day_diff_amount)} ({summarydata_30day_diff_percent}%)
 
     Annualised equity growth since inception: {annualised_return}%
 
