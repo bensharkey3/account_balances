@@ -23,7 +23,7 @@ def as_currency(amount):
 
 
 def units_message_str(code, units, units_change):
-    units_message = f"Units added: {code} {units} (+{units_change})"
+    units_message = f"Units added {code}:  {units} (+{units_change})"
     return units_message
 
     
@@ -277,20 +277,21 @@ def lambda_handler(event, context):
     units_message = [units_message_str(x, y, z) for x, y, z in zip(marketdata_sorted['Code'], marketdata_sorted['Units'], marketdata_sorted['units_change'])]
 
     units_message_string = """
-    {}
+{}
     """.format("\n".join(units_message[1:]))
 
 
     message = f'''
-    {data_message}
+{data_message}
 
-    Total Equity:  {as_currency(summarydata_daily_equity_amount)}
-    - daily diff:  {as_currency(summarydata_daily_diff_amount)} ({summarydata_daily_diff_percent}%)
-    - 7 day diff:  {as_currency(summarydata_7day_diff_amount)} ({summarydata_7day_diff_percent}%)
-    - 30 day diff:  {as_currency(summarydata_30day_diff_amount)} ({summarydata_30day_diff_percent}%)
-    Annualised equity growth since inception: {annualised_return}%
-    {ir_message}
-    {loan_message}
+Total Equity:  {as_currency(summarydata_daily_equity_amount)}
+- daily diff:  {as_currency(summarydata_daily_diff_amount)} ({summarydata_daily_diff_percent}%)
+- 7 day diff:  {as_currency(summarydata_7day_diff_amount)} ({summarydata_7day_diff_percent}%)
+- 30 day diff:  {as_currency(summarydata_30day_diff_amount)} ({summarydata_30day_diff_percent}%)
+
+Annualised equity growth since inception: {annualised_return}%
+{ir_message}
+{loan_message}
     '''
 
     message += units_message_string
