@@ -61,6 +61,9 @@ def lambda_handler(event, context):
     s3client = boto3.client('s3')
     s3client.put_object(Body=data, Bucket='account-balances-scraper', Key='cmc-holdings/' + filename)
 
+    
+    driver.quit()
+
 
     return {
         'statusCode': 200,
