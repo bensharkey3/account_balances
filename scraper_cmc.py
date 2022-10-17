@@ -5,7 +5,8 @@ import time
 import os
 from os import listdir
 from os.path import isfile, join
-import pandas as pd
+import pytz
+import datetime
 
 
 DRIVER_PATH = r"C:\Users\Ben\Documents\chromedriver_win32\chromedriver.exe"
@@ -58,5 +59,12 @@ files = [f for f in listdir(mypath) if isfile(join(mypath, f))]
 files = [k for k in files if 'StockHoldings-' in k]
 file = sorted(files, reverse=True)[0]
 
-df = pd.read_csv(mypath + "\\" + file)
+# write csv file to s3
+tz = pytz.timezone('Australia/Melbourne')
+filename = datetime.datetime.now(tz).strftime('%Y-%m-%d--%H-%M-%p') + '.csv'
 
+with open(mypath + "/" + file, 'rb') as f:
+    data = f.read().decode('utf-8')
+
+s3client = boto3.client('s3')
+s3client.put_object(Body=data, Bucket='account-balances-scraper', Key='cmc-holdings/' + filename)
