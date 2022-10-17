@@ -258,15 +258,24 @@ def lambda_handler(event, context):
     summarydata_temp = df_summarydata[df_summarydata['Measure'] == 'Net Equity'].sort_values(by='File Date', ascending=False)
     summarydata_temp['Value'] = convert_value_col(summarydata_temp['Value'])
     todays_date = summarydata_temp['File Date'].iloc[0]
-    yesterdays_date = todays_date - timedelta(days=1)
+    previous_date = summarydata_temp['File Date'].iloc[1]
     days_ago30 = summarydata_temp['File Date'].iloc[0] - pd.to_timedelta(30, unit='d')
-    summarydata_temp = summarydata_temp[summarydata_temp['File Date'].isin([days_ago30, todays_date])]
-    summarydata_temp['value_diff'] = summarydata_temp['Value'].diff(periods=-1)
-    summarydata_temp['diff_percent'] = summarydata_temp['value_diff']*100 / summarydata_temp['Value'].iloc[1]
-    summarydata_30day_diff_amount = round(summarydata_temp['value_diff'].iloc[0], 2)
-    summarydata_30day_diff_percent = round(summarydata_temp['diff_percent'].iloc[0], 2)
 
-    marketdata_sorted = df_marketdata[df_marketdata['File Date'].isin([todays_date, yesterdays_date])]
+    # need to interpolate because 30 days ago doesnt exist sometimes
+    all_days = pd.date_range("2022-09-12", todays_date, freq='d').to_frame()
+    summarydata_temp = pd.merge(all_days, summarydata_temp, how='left', left_on=0, right_on='File Date')
+    summarydata_temp['File Date'] = summarydata_temp[0]
+    summarydata_temp.drop(0, axis=1, inplace=True)
+    summarydata_temp['Measure'] = 'Net Equity'
+    summarydata_temp['Value'].fillna(method='ffill', inplace=True)
+
+    summarydata_temp2 = summarydata_temp[summarydata_temp['File Date'].isin([days_ago30, todays_date])]
+    summarydata_temp2['value_diff'] = summarydata_temp2['Value'].diff(periods=1)
+    summarydata_temp2['diff_percent'] = summarydata_temp2['value_diff']*100 / summarydata_temp2['Value'].iloc[1]
+    summarydata_30day_diff_amount = round(summarydata_temp2['value_diff'].iloc[1], 2)
+    summarydata_30day_diff_percent = round(summarydata_temp2['diff_percent'].iloc[1], 2)
+
+    marketdata_sorted = df_marketdata[df_marketdata['File Date'].isin([todays_date, previous_date])]
     marketdata_sorted['Units'] = marketdata_sorted['Units'].astype(int)
     marketdata_sorted.sort_values(by=['Security Name', 'File Date'], ascending=False, inplace=True)
     marketdata_sorted['units_yesterday'] = marketdata_sorted.groupby('Security Name')['Units'].shift(-1)   # change to Units (Price)
