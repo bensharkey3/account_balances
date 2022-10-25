@@ -29,6 +29,15 @@ def convert_value_col(df_col):
     return df_col
 
 
+def convert_percent_col(df_col):
+    '''change data type from percent in string to float
+    '''
+    df_col = df_col.replace({'\%':''}, regex = True)
+    df_col = df_col.replace({'\,':''}, regex = True)
+    df_col = df_col.astype('float')
+    return df_col
+
+
 # create cmc df
 df_cmc = pd.DataFrame(columns=["snapshot_date","Account Number","Account Name","Code","Last","Currency",
                                 "FX Rate","CHESS holdings","Collateral","Recent buys","Recent sells",
@@ -54,6 +63,11 @@ for obj in bucket.objects.filter(Prefix='cmc-holdings/202'):
 obj_marketdata = "transformed/marketdata.csv"
 response = s3client.get_object(Bucket=bucket_name, Key=obj_marketdata)
 df_marketdata = pd.read_csv(response.get("Body"), index_col="Unnamed: 0")
+
+# get loandetails df from source
+obj_loandetails = "transformed/loandetails.csv"
+response = s3client.get_object(Bucket=bucket_name, Key=obj_loandetails)
+df_loandetails = pd.read_csv(response.get("Body"), index_col="Unnamed: 0")
 
 # get summarydata df from source
 obj_summarydata = "transformed/summarydata.csv"
@@ -109,7 +123,13 @@ bank_holdings.rename(columns={'Value': 'Loan Value'}, inplace=True)
 bank_holdings['Loan Value'] = np.where(bank_holdings['Platform'] == 'CMC', 0, bank_holdings['Loan Value'])
 bank_holdings['Equity'] = bank_holdings['Market Value'] - bank_holdings['Loan Value']
 
+bank_holdings = bank_holdings.merge(df_loandetails[['File Date', 'Interest Rate']], how='left', on='File Date')
+bank_holdings['Interest Rate'] = np.where(bank_holdings['Platform'] == 'CMC', 0, bank_holdings['Interest Rate'])
+bank_holdings['Interest Rate'] = convert_percent_col(bank_holdings['Interest Rate'])
+
 # add diff columns
+bank_holdings['diff_1busday_interestrate'] = bank_holdings.groupby('Platform')['Interest Rate'].diff()
+
 bank_holdings['diff_1busday_marketvalue'] = bank_holdings.groupby('Platform')['Market Value'].diff()
 bank_holdings['diff_5busday_marketvalue'] = bank_holdings.groupby('Platform')['Market Value'].diff(periods=5)
 bank_holdings['diff_21busday_marketvalue'] = bank_holdings.groupby('Platform')['Market Value'].diff(periods=21)
