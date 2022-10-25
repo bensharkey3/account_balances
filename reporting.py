@@ -77,16 +77,25 @@ unit_holdings = pd.concat([df_cmc, df_marketdata], axis=0)
 unit_holdings = unit_holdings[['File Date', 'Platform', 'Code', 'Units', 'Price', 'Market Value']]\
     .sort_values(by=['File Date', 'Market Value'], ascending=True).reset_index(drop=True)
 
+# clean df to remove unit holdings = 0
+unit_holdings = unit_holdings[unit_holdings['Units'] != 0]
+
 # add diff columns
 unit_holdings['diff_1busday_marketvalue'] = unit_holdings.groupby('Code')['Market Value'].diff()
 unit_holdings['diff_5busday_marketvalue'] = unit_holdings.groupby('Code')['Market Value'].diff(periods=5)
 unit_holdings['diff_21busday_marketvalue'] = unit_holdings.groupby('Code')['Market Value'].diff(periods=21)
-unit_holdings['diff_1busday_marketvalue%'] = 1+ (unit_holdings['diff_1busday_marketvalue'] - \
-    unit_holdings['Market Value']) / unit_holdings['Market Value']
-unit_holdings['diff_5busday_marketvalue%'] = 1+ (unit_holdings['diff_5busday_marketvalue'] - \
-    unit_holdings['Market Value']) / unit_holdings['Market Value']
-unit_holdings['diff_21busday_marketvalue%'] = 1+ (unit_holdings['diff_21busday_marketvalue'] - \
-    unit_holdings['Market Value']) / unit_holdings['Market Value']
+
+unit_holdings['diff_1busday_units'] = unit_holdings.groupby('Code')['Units'].diff()
+unit_holdings['diff_5busday_units'] = unit_holdings.groupby('Code')['Units'].diff(periods=5)
+unit_holdings['diff_21busday_units'] = unit_holdings.groupby('Code')['Units'].diff(periods=21)
+
+unit_holdings['diff_1busday_marketvalue%'] = unit_holdings['diff_1busday_marketvalue'] / unit_holdings['Market Value']
+unit_holdings['diff_5busday_marketvalue%'] = unit_holdings['diff_5busday_marketvalue'] / unit_holdings['Market Value']
+unit_holdings['diff_21busday_marketvalue%'] = unit_holdings['diff_21busday_marketvalue'] / unit_holdings['Market Value']
+
+unit_holdings['diff_1busday_units%'] = unit_holdings['diff_1busday_units'] / unit_holdings['Units']
+unit_holdings['diff_5busday_units%'] = unit_holdings['diff_5busday_units'] / unit_holdings['Units']
+unit_holdings['diff_21busday_units%'] = unit_holdings['diff_21busday_units'] / unit_holdings['Units']
 
 # create bank holdings
 bank_holdings = unit_holdings.groupby(['File Date', 'Platform'])[['Market Value']].sum().reset_index()
@@ -104,22 +113,16 @@ bank_holdings['Equity'] = bank_holdings['Market Value'] - bank_holdings['Loan Va
 bank_holdings['diff_1busday_marketvalue'] = bank_holdings.groupby('Platform')['Market Value'].diff()
 bank_holdings['diff_5busday_marketvalue'] = bank_holdings.groupby('Platform')['Market Value'].diff(periods=5)
 bank_holdings['diff_21busday_marketvalue'] = bank_holdings.groupby('Platform')['Market Value'].diff(periods=21)
-bank_holdings['diff_1busday_marketvalue%'] = 1+ (bank_holdings['diff_1busday_marketvalue'] - \
-    bank_holdings['Market Value']) / bank_holdings['Market Value']
-bank_holdings['diff_5busday_marketvalue%'] = 1+ (bank_holdings['diff_5busday_marketvalue'] - \
-    bank_holdings['Market Value']) / bank_holdings['Market Value']
-bank_holdings['diff_21busday_marketvalue%'] = 1+ (bank_holdings['diff_21busday_marketvalue'] - \
-    bank_holdings['Market Value']) / bank_holdings['Market Value']
+bank_holdings['diff_1busday_marketvalue%'] = bank_holdings['diff_1busday_marketvalue'] / bank_holdings['Market Value']
+bank_holdings['diff_5busday_marketvalue%'] = bank_holdings['diff_5busday_marketvalue'] / bank_holdings['Market Value']
+bank_holdings['diff_21busday_marketvalue%'] = bank_holdings['diff_21busday_marketvalue'] / bank_holdings['Market Value']
 
 bank_holdings['diff_1busday_equity'] = bank_holdings.groupby('Platform')['Equity'].diff()
 bank_holdings['diff_5busday_equity'] = bank_holdings.groupby('Platform')['Equity'].diff(periods=5)
 bank_holdings['diff_21busday_equity'] = bank_holdings.groupby('Platform')['Equity'].diff(periods=21)
-bank_holdings['diff_1busday_equity%'] = 1+ (bank_holdings['diff_1busday_equity'] - \
-    bank_holdings['Equity']) / bank_holdings['Equity']
-bank_holdings['diff_5busday_equity%'] = 1+ (bank_holdings['diff_5busday_marketvalue'] - \
-    bank_holdings['Equity']) / bank_holdings['Equity']
-bank_holdings['diff_21busday_equity%'] = 1+ (bank_holdings['diff_21busday_marketvalue'] - \
-    bank_holdings['Equity']) / bank_holdings['Equity']
+bank_holdings['diff_1busday_equity%'] = bank_holdings['diff_1busday_equity'] / bank_holdings['Equity']
+bank_holdings['diff_5busday_equity%'] = bank_holdings['diff_5busday_marketvalue'] / bank_holdings['Equity']
+bank_holdings['diff_21busday_equity%'] = bank_holdings['diff_21busday_marketvalue'] / bank_holdings['Equity']
 
 # create total holdings
 total_holdings = bank_holdings.groupby('File Date')[['File Date', 'Market Value', 'Loan Value', 'Equity']]\
@@ -131,19 +134,13 @@ total_holdings['diff_loanvalue'] = total_holdings['Loan Value'].diff()
 total_holdings['diff_1busday_marketvalue'] = total_holdings['Market Value'].diff()
 total_holdings['diff_5busday_marketvalue'] = total_holdings['Market Value'].diff(periods=5)
 total_holdings['diff_21busday_marketvalue'] = total_holdings['Market Value'].diff(periods=21)
-total_holdings['diff_1busday_marketvalue%'] = 1+ (total_holdings['diff_1busday_marketvalue'] - \
-    total_holdings['Market Value']) / total_holdings['Market Value']
-total_holdings['diff_5busday_marketvalue%'] = 1+ (total_holdings['diff_5busday_marketvalue'] - \
-    total_holdings['Market Value']) / total_holdings['Market Value']
-total_holdings['diff_21busday_marketvalue%'] = 1+ (total_holdings['diff_21busday_marketvalue'] - \
-    total_holdings['Market Value']) / total_holdings['Market Value']
+total_holdings['diff_1busday_marketvalue%'] = total_holdings['diff_1busday_marketvalue'] / total_holdings['Market Value']
+total_holdings['diff_5busday_marketvalue%'] = total_holdings['diff_5busday_marketvalue'] / total_holdings['Market Value']
+total_holdings['diff_21busday_marketvalue%'] = total_holdings['diff_21busday_marketvalue'] / total_holdings['Market Value']
 
 total_holdings['diff_1busday_equity'] = total_holdings['Equity'].diff()
 total_holdings['diff_5busday_equity'] = total_holdings['Equity'].diff(periods=5)
 total_holdings['diff_21busday_equity'] = total_holdings['Equity'].diff(periods=21)
-total_holdings['diff_1busday_equity%'] = 1+ (total_holdings['diff_1busday_equity'] - \
-    total_holdings['Equity']) / total_holdings['Equity']
-total_holdings['diff_5busday_equity%'] = 1+ (total_holdings['diff_5busday_marketvalue'] - \
-    total_holdings['Equity']) / total_holdings['Equity']
-total_holdings['diff_21busday_equity%'] = 1+ (total_holdings['diff_21busday_marketvalue'] - \
-    total_holdings['Equity']) / total_holdings['Equity']
+total_holdings['diff_1busday_equity%'] = total_holdings['diff_1busday_equity'] / total_holdings['Equity']
+total_holdings['diff_5busday_equity%'] = total_holdings['diff_5busday_marketvalue'] / total_holdings['Equity']
+total_holdings['diff_21busday_equity%'] = total_holdings['diff_21busday_marketvalue'] / total_holdings['Equity']
