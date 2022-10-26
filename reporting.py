@@ -2,7 +2,7 @@ import os
 import boto3
 import pandas as pd
 import numpy as np
-from datetime import datetime
+from datetime import datetime, timedelta
 
 
 os.environ["AWS_ACCESS_KEY_ID"] = ''
@@ -36,6 +36,17 @@ def convert_percent_col(df_col):
     df_col = df_col.replace({'\,':''}, regex = True)
     df_col = df_col.astype('float')
     return df_col
+
+
+def as_currency(amount):
+    if amount >= 0:
+        return "${:,.0f}".format(amount)
+    else:
+        return "-${:,.0f}".format(-amount)
+
+def units_message_str(code, units, units_change):
+    units_message = f"Units added today  {code}:  {units} (+{units_change})"
+    return units_message
 
 
 # create cmc df
@@ -164,3 +175,61 @@ total_holdings['diff_21busday_equity'] = total_holdings['Equity'].diff(periods=2
 total_holdings['diff_1busday_equity%'] = total_holdings['diff_1busday_equity'] / total_holdings['Equity']
 total_holdings['diff_5busday_equity%'] = total_holdings['diff_5busday_marketvalue'] / total_holdings['Equity']
 total_holdings['diff_21busday_equity%'] = total_holdings['diff_21busday_marketvalue'] / total_holdings['Equity']
+
+# create email message body
+data_updated = min(df_marketdata['File Date'].sort_values(ascending=False).iloc[0],
+    df_loandetails['File Date'].sort_values(ascending=False).iloc[0],
+    df_summarydata['File Date'].sort_values(ascending=False).iloc[0])
+
+todays_date = datetime.today().strftime('%Y-%m-%d')
+yesterdays_date = (datetime.today() - timedelta(days=1)).strftime('%Y-%m-%d')
+
+if data_updated == todays_date:
+    data_message = f'Data up to date for today: {data_updated}'
+else:
+    data_message = f'ERROR - data out of date, most recent date: {data_updated}, todays date: {todays_date}'
+
+# create individual messages
+nab_equity = bank_holdings[bank_holdings['Platform'] == 'NAB']['Equity'].values[-1]
+nab_equity_1daydiff = bank_holdings[bank_holdings['Platform'] == 'NAB']['diff_1busday_equity'].values[-1]
+nab_equity_1daydiff_pct = bank_holdings[bank_holdings['Platform'] == 'NAB']['diff_1busday_equity%'].values[-1]
+nab_equity_5daydiff = bank_holdings[bank_holdings['Platform'] == 'NAB']['diff_5busday_equity'].values[-1]
+nab_equity_5daydiff_pct = bank_holdings[bank_holdings['Platform'] == 'NAB']['diff_5busday_equity%'].values[-1]
+nab_equity_21daydiff = bank_holdings[bank_holdings['Platform'] == 'NAB']['diff_21busday_equity'].values[-1]
+nab_equity_21daydiff_pct = bank_holdings[bank_holdings['Platform'] == 'NAB']['diff_21busday_equity%'].values[-1]
+
+# temp set a value to test
+# unit_holdings.loc[253, 'diff_1busday_units'] = 23
+
+loandetails_daily_diff_rate = bank_holdings[bank_holdings['Platform'] == 'NAB']['diff_1busday_interestrate'].values[-1]
+
+if loandetails_daily_diff_rate != 0:
+    ir_message = f"Interest rate has increased by:  {loandetails_daily_diff_rate}%"
+else:
+    ir_message = ""
+
+summarydata_loan_daily_diff = total_holdings['diff_loanvalue'].values[-1]
+
+if summarydata_loan_daily_diff != 0:
+    loan_message = f"Loan amount reduced by:  {as_currency(summarydata_loan_daily_diff*-1)}"
+else:
+    loan_message = ""
+
+df_units_message = unit_holdings[(unit_holdings['File Date'] == todays_date) & (unit_holdings['diff_1busday_units'] != 0)]
+units_message = [units_message_str(x, y, z) for x, y, z in zip(df_units_message['Code'], df_units_message['Units'], df_units_message['diff_1busday_units'])]
+units_message_string = """
+{}
+""".format("\n".join(units_message[0:]))
+
+
+message = f'''
+{data_message}
+NAB Equity:  {as_currency(nab_equity)}
+- daily diff:  {as_currency(nab_equity_1daydiff)} ({nab_equity_1daydiff_pct*100}%)
+- 7 day diff:  {as_currency(nab_equity_5daydiff)} ({nab_equity_5daydiff_pct*100}%)
+- 30 day diff:  {as_currency(nab_equity_21daydiff)} ({nab_equity_21daydiff_pct*100}%)
+Annualised equity growth since inception 2022-09-12:  %
+{ir_message}
+{loan_message}
+{units_message_string}
+'''
