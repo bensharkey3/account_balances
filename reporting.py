@@ -289,4 +289,4 @@ Total Equity:  {as_currency(total_equity)}
 
 '''
 
-message = message.replace("\n\n", "\n").replace("\n\n\n", "\n")
+message = message.replace("\n\n\n\n\n", "\n\n").replace("\n\n\n\n", "\n\n").replace("\n\n\n", "\n\n")
