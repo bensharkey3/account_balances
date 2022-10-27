@@ -144,16 +144,22 @@ bank_holdings['diff_1busday_interestrate'] = bank_holdings.groupby('Platform')['
 bank_holdings['diff_1busday_marketvalue'] = bank_holdings.groupby('Platform')['Market Value'].diff()
 bank_holdings['diff_5busday_marketvalue'] = bank_holdings.groupby('Platform')['Market Value'].diff(periods=5)
 bank_holdings['diff_21busday_marketvalue'] = bank_holdings.groupby('Platform')['Market Value'].diff(periods=21)
-bank_holdings['diff_1busday_marketvalue%'] = bank_holdings['diff_1busday_marketvalue'] / bank_holdings['Market Value']
-bank_holdings['diff_5busday_marketvalue%'] = bank_holdings['diff_5busday_marketvalue'] / bank_holdings['Market Value']
-bank_holdings['diff_21busday_marketvalue%'] = bank_holdings['diff_21busday_marketvalue'] / bank_holdings['Market Value']
+bank_holdings['diff_1busday_marketvalue%'] = bank_holdings['diff_1busday_marketvalue'] / \
+    (bank_holdings['Market Value'] - bank_holdings['diff_1busday_marketvalue'])
+bank_holdings['diff_5busday_marketvalue%'] = bank_holdings['diff_5busday_marketvalue'] / \
+    (bank_holdings['Market Value'] - bank_holdings['diff_5busday_marketvalue'])
+bank_holdings['diff_21busday_marketvalue%'] = bank_holdings['diff_21busday_marketvalue'] / \
+    (bank_holdings['Market Value'] - bank_holdings['diff_21busday_marketvalue'])
 
 bank_holdings['diff_1busday_equity'] = bank_holdings.groupby('Platform')['Equity'].diff()
 bank_holdings['diff_5busday_equity'] = bank_holdings.groupby('Platform')['Equity'].diff(periods=5)
 bank_holdings['diff_21busday_equity'] = bank_holdings.groupby('Platform')['Equity'].diff(periods=21)
-bank_holdings['diff_1busday_equity%'] = bank_holdings['diff_1busday_equity'] / bank_holdings['Equity']
-bank_holdings['diff_5busday_equity%'] = bank_holdings['diff_5busday_marketvalue'] / bank_holdings['Equity']
-bank_holdings['diff_21busday_equity%'] = bank_holdings['diff_21busday_marketvalue'] / bank_holdings['Equity']
+bank_holdings['diff_1busday_equity%'] = bank_holdings['diff_1busday_equity'] / \
+    (bank_holdings['Equity'] - bank_holdings['diff_1busday_equity'])
+bank_holdings['diff_5busday_equity%'] = bank_holdings['diff_5busday_equity'] / \
+    (bank_holdings['Equity'] - bank_holdings['diff_5busday_equity'])
+bank_holdings['diff_21busday_equity%'] = bank_holdings['diff_21busday_equity'] / \
+    (bank_holdings['Equity'] - bank_holdings['diff_21busday_equity'])
 
 # create total holdings
 total_holdings = bank_holdings.groupby('File Date')[['File Date', 'Market Value', 'Loan Value', 'Equity']]\
@@ -165,16 +171,22 @@ total_holdings['diff_loanvalue'] = total_holdings['Loan Value'].diff()
 total_holdings['diff_1busday_marketvalue'] = total_holdings['Market Value'].diff()
 total_holdings['diff_5busday_marketvalue'] = total_holdings['Market Value'].diff(periods=5)
 total_holdings['diff_21busday_marketvalue'] = total_holdings['Market Value'].diff(periods=21)
-total_holdings['diff_1busday_marketvalue%'] = total_holdings['diff_1busday_marketvalue'] / total_holdings['Market Value']
-total_holdings['diff_5busday_marketvalue%'] = total_holdings['diff_5busday_marketvalue'] / total_holdings['Market Value']
-total_holdings['diff_21busday_marketvalue%'] = total_holdings['diff_21busday_marketvalue'] / total_holdings['Market Value']
+total_holdings['diff_1busday_marketvalue%'] = total_holdings['diff_1busday_marketvalue'] / \
+    (total_holdings['Market Value'] - total_holdings['diff_1busday_marketvalue'])
+total_holdings['diff_5busday_marketvalue%'] = total_holdings['diff_5busday_marketvalue'] / \
+    (total_holdings['Market Value'] - total_holdings['diff_5busday_marketvalue'])
+total_holdings['diff_21busday_marketvalue%'] = total_holdings['diff_21busday_marketvalue'] / \
+    (total_holdings['Market Value'] - total_holdings['diff_21busday_marketvalue'])
 
 total_holdings['diff_1busday_equity'] = total_holdings['Equity'].diff()
 total_holdings['diff_5busday_equity'] = total_holdings['Equity'].diff(periods=5)
 total_holdings['diff_21busday_equity'] = total_holdings['Equity'].diff(periods=21)
-total_holdings['diff_1busday_equity%'] = total_holdings['diff_1busday_equity'] / total_holdings['Equity']
-total_holdings['diff_5busday_equity%'] = total_holdings['diff_5busday_marketvalue'] / total_holdings['Equity']
-total_holdings['diff_21busday_equity%'] = total_holdings['diff_21busday_marketvalue'] / total_holdings['Equity']
+total_holdings['diff_1busday_equity%'] = total_holdings['diff_1busday_equity'] / \
+    (total_holdings['Equity'] - total_holdings['diff_1busday_equity'])
+total_holdings['diff_5busday_equity%'] = total_holdings['diff_5busday_equity'] / \
+    (total_holdings['Equity'] - total_holdings['diff_5busday_equity'])
+total_holdings['diff_21busday_equity%'] = total_holdings['diff_21busday_equity'] / \
+    (total_holdings['Equity'] - total_holdings['diff_21busday_equity'])
 
 # create email message body
 data_updated = min(df_marketdata['File Date'].sort_values(ascending=False).iloc[0],
@@ -189,7 +201,7 @@ if data_updated == todays_date:
 else:
     data_message = f'ERROR - data out of date, most recent date: {data_updated}, todays date: {todays_date}'
 
-# create individual messages
+# create individual nab messages
 nab_equity = bank_holdings[bank_holdings['Platform'] == 'NAB']['Equity'].values[-1]
 nab_equity_1daydiff = bank_holdings[bank_holdings['Platform'] == 'NAB']['diff_1busday_equity'].values[-1]
 nab_equity_1daydiff_pct = bank_holdings[bank_holdings['Platform'] == 'NAB']['diff_1busday_equity%'].values[-1]
@@ -198,8 +210,12 @@ nab_equity_5daydiff_pct = bank_holdings[bank_holdings['Platform'] == 'NAB']['dif
 nab_equity_21daydiff = bank_holdings[bank_holdings['Platform'] == 'NAB']['diff_21busday_equity'].values[-1]
 nab_equity_21daydiff_pct = bank_holdings[bank_holdings['Platform'] == 'NAB']['diff_21busday_equity%'].values[-1]
 
-# temp set a value to test
-# unit_holdings.loc[253, 'diff_1busday_units'] = 23
+df_ann_eq_growth = bank_holdings[(bank_holdings['File Date'].isin(['2022-09-12', todays_date])) & \
+                                 (bank_holdings['Platform'] == 'NAB')]
+nab_eq_growth = round(df_ann_eq_growth['Equity'].diff().values[1], 2)
+df_ann_eq_growth['File Date'] = pd.to_datetime(df_ann_eq_growth['File Date'])
+nab_eq_percent_ofyear = (df_ann_eq_growth['File Date'].iloc[1] - df_ann_eq_growth['File Date'].iloc[0]).days / 365
+annualised_return_percent = round((nab_eq_growth / nab_eq_percent_ofyear)*100 / (nab_equity - nab_eq_growth), 2)
 
 loandetails_daily_diff_rate = bank_holdings[bank_holdings['Platform'] == 'NAB']['diff_1busday_interestrate'].values[-1]
 
@@ -216,20 +232,40 @@ else:
     loan_message = ""
 
 df_units_message = unit_holdings[(unit_holdings['File Date'] == todays_date) & (unit_holdings['diff_1busday_units'] != 0)]
-units_message = [units_message_str(x, y, z) for x, y, z in zip(df_units_message['Code'], df_units_message['Units'], df_units_message['diff_1busday_units'])]
+units_message = [units_message_str(x, y, z) for x, y, z in zip(df_units_message['Code'], df_units_message['Units'], \
+                                                               df_units_message['diff_1busday_units'])]
+
 units_message_string = """
 {}
 """.format("\n".join(units_message[0:]))
 
+# create individual cmc messages
+cmc_equity = bank_holdings[bank_holdings['Platform'] == 'CMC']['Equity'].values[-1]
+cmc_equity_1daydiff = bank_holdings[bank_holdings['Platform'] == 'CMC']['diff_1busday_equity'].values[-1]
+cmc_equity_1daydiff_pct = bank_holdings[bank_holdings['Platform'] == 'CMC']['diff_1busday_equity%'].values[-1]
+cmc_equity_5daydiff = bank_holdings[bank_holdings['Platform'] == 'CMC']['diff_5busday_equity'].values[-1]
+cmc_equity_5daydiff_pct = bank_holdings[bank_holdings['Platform'] == 'CMC']['diff_5busday_equity%'].values[-1]
+cmc_equity_21daydiff = bank_holdings[bank_holdings['Platform'] == 'CMC']['diff_21busday_equity'].values[-1]
+cmc_equity_21daydiff_pct = bank_holdings[bank_holdings['Platform'] == 'CMC']['diff_21busday_equity%'].values[-1]
+
 
 message = f'''
 {data_message}
+
 NAB Equity:  {as_currency(nab_equity)}
-- daily diff:  {as_currency(nab_equity_1daydiff)} ({nab_equity_1daydiff_pct*100}%)
-- 7 day diff:  {as_currency(nab_equity_5daydiff)} ({nab_equity_5daydiff_pct*100}%)
-- 30 day diff:  {as_currency(nab_equity_21daydiff)} ({nab_equity_21daydiff_pct*100}%)
-Annualised equity growth since inception 2022-09-12:  %
+- daily diff:  {as_currency(nab_equity_1daydiff)} ({round(nab_equity_1daydiff_pct*100, 2)}%)
+- 5 bus day diff:  {as_currency(nab_equity_5daydiff)} ({round(nab_equity_5daydiff_pct*100, 2)}%)
+- 21 bus day diff:  {as_currency(nab_equity_21daydiff)} ({round(nab_equity_21daydiff_pct*100, 2)}%)
+Annualised equity growth since inception 2022-09-12:  {annualised_return_percent}%
 {ir_message}
 {loan_message}
 {units_message_string}
+
+CMC Equity:  {as_currency(cmc_equity)}
+- daily diff:  {as_currency(cmc_equity_1daydiff)} ({round(cmc_equity_1daydiff_pct*100, 2)}%)
+- 5 bus day diff:  {as_currency(cmc_equity_5daydiff)} ({round(cmc_equity_5daydiff_pct*100, 2)}%)
+- 21 bus day diff:  {as_currency(cmc_equity_21daydiff)} ({round(cmc_equity_21daydiff_pct*100, 2)}%)
+
+Total Equity:  {as_currency(nab_equity + cmc_equity)}
+
 '''
