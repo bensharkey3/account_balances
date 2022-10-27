@@ -288,3 +288,5 @@ Total Equity:  {as_currency(total_equity)}
 - 21 bus day diff:  {as_currency(total_equity_21daydiff)} ({round(total_equity_21daydiff_pct*100, 2)}%)
 
 '''
+
+message = message.replace("\n\n", "\n").replace("\n\n\n", "\n")
