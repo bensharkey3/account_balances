@@ -51,7 +51,7 @@ Resources:
     Properties: 
       Name: !Sub "ScheduledRuleTransform-${Environment}"
       Description: "ScheduledRuleTransform"
-      ScheduleExpression: "cron(40 7 ? * MON-FRI *)"
+      ScheduleExpression: "cron(05 7 ? * MON-FRI *)"
       State: "ENABLED"
       Targets: 
         - 
@@ -66,7 +66,7 @@ Resources:
     Properties: 
       Name: !Sub "ScheduledRuleReporting-${Environment}"
       Description: "ScheduledRuleReporting"
-      ScheduleExpression: "cron(40 7 ? * MON-FRI *)"
+      ScheduleExpression: "cron(10 7 ? * MON-FRI *)"
       State: "ENABLED"
       Targets: 
         - 
@@ -79,7 +79,7 @@ Resources:
   PermissionForEventsToInvokeTransformLambda: 
     Type: AWS::Lambda::Permission
     Properties: 
-      FunctionName: !Ref "PermissionTransformLambda-${Environment}"
+      FunctionName: !Ref "AccountBalancesTransformLambda"
       Action: "lambda:InvokeFunction"
       Principal: "events.amazonaws.com"
       SourceArn: 
@@ -90,7 +90,7 @@ Resources:
   PermissionForEventsToInvokeReportingLambda: 
     Type: AWS::Lambda::Permission
     Properties: 
-      FunctionName: !Ref "PermissionReportingLambda-${Environment}"
+      FunctionName: !Ref "AccountBalancesReportingLambda"
       Action: "lambda:InvokeFunction"
       Principal: "events.amazonaws.com"
       SourceArn: 
@@ -101,7 +101,7 @@ Resources:
   SNSTopicEmail:
     Type: AWS::SNS::Topic
     Properties:
-      DisplayName: !Ref "SNSTopicEmail-${Environment}"
+      DisplayName: !Sub "SNSTopicEmail-${Environment}"
       Subscription:
         - Endpoint: "bensharkey3@gmail.com"
           Protocol: "email"
