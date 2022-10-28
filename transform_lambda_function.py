@@ -50,7 +50,7 @@ def lambda_handler(event, context):
     bucket = s3resource.Bucket(bucket_name)
 
     # get SNS arn
-    SNS_ARN = os.environ['SNS_ARN']
+    # SNS_ARN = os.environ['SNS_ARN']
 
 
     # create marketdata df
@@ -188,9 +188,3 @@ def lambda_handler(event, context):
     csv_buffer_transactions = StringIO()
     df_transactions.to_csv(csv_buffer_transactions)
     s3resource.Object(bucket_name, 'transformed/' + 'transactions.csv').put(Body=csv_buffer_transactions.getvalue())
-
-
-    return {
-        'statusCode': 200,
-        'body': json.dumps(response)
-    }
