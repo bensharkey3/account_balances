@@ -1,13 +1,14 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: account-balances webscraping template.
+Description: account-balances webscraping template. Includes the transform lambda and schedule, and sns email
 
 Parameters:
   Environment:
     Type: String
-    Description: Select the appropriate environment
+    Default: dev
     AllowedValues:
       - dev
       - prod
+    Description: Enter dev or prd. Default is dev.
 
 Resources:
   AccountBalancesTransformLambda:
@@ -25,14 +26,30 @@ Resources:
       Layers: 
         - "arn:aws:lambda:ap-southeast-2:770693421928:layer:Klayers-p38-pandas:8"
         - "arn:aws:lambda:ap-southeast-2:770693421928:layer:Klayers-p38-lxml:3"
+
+  AccountBalancesReportingLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub account-balances-reporting-${Environment}
+      Description: !Sub "runs a lambda for account-balances-reporting in ${Environment} environment"
+      Runtime: python3.8
+      Handler: reporting_lambda_function.lambda_handler
+      Timeout: 600
+      Role: arn:aws:iam::537808241319:role/service-role/account_balances_scraper_role
+      Code:
+        S3Bucket: lambda-cloudformation-sourcecode-bucket
+        S3Key: "account-balances/reporting_lambda_function.zip"
+      Layers: 
+        - "arn:aws:lambda:ap-southeast-2:770693421928:layer:Klayers-p38-pandas:8"
+        - "arn:aws:lambda:ap-southeast-2:770693421928:layer:Klayers-p38-numpy:7"
       Environment:
         Variables: 
           SNS_ARN: !Ref "SNSTopicEmail"
 
-  ScheduledRule: 
+  ScheduledRuleTransform: 
     Type: AWS::Events::Rule
     Properties: 
-      Description: "ScheduledRule"
+      Description: "ScheduledRuleTransform"
       ScheduleExpression: "cron(40 7 ? * MON-FRI *)"
       State: "ENABLED"
       Targets: 
@@ -42,8 +59,22 @@ Resources:
               - "AccountBalancesTransformLambda"
               - "Arn"
           Id: "AccountBalancesTransformLambda"
+
+  ScheduledRuleReporting: 
+    Type: AWS::Events::Rule
+    Properties: 
+      Description: "ScheduledRuleReporting"
+      ScheduleExpression: "cron(50 7 ? * MON-FRI *)"
+      State: "ENABLED"
+      Targets: 
+        - 
+          Arn: 
+            Fn::GetAtt: 
+              - "AccountBalancesReportingLambda"
+              - "Arn"
+          Id: "AccountBalancesReportingLambda"
           
-  PermissionForEventsToInvokeLambda: 
+  PermissionForEventsToInvokeTransformLambda: 
     Type: AWS::Lambda::Permission
     Properties: 
       FunctionName: !Ref "AccountBalancesTransformLambda"
@@ -51,7 +82,18 @@ Resources:
       Principal: "events.amazonaws.com"
       SourceArn: 
         Fn::GetAtt: 
-          - "ScheduledRule"
+          - "ScheduledRuleTransform"
+          - "Arn"
+
+  PermissionForEventsToInvokeReportingLambda: 
+    Type: AWS::Lambda::Permission
+    Properties: 
+      FunctionName: !Ref "AccountBalancesReportingLambda"
+      Action: "lambda:InvokeFunction"
+      Principal: "events.amazonaws.com"
+      SourceArn: 
+        Fn::GetAtt: 
+          - "ScheduledRuleReporting"
           - "Arn"
   
   SNSTopicEmail:
