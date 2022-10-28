@@ -6,10 +6,6 @@ import numpy as np
 from datetime import datetime, timedelta
 
 
-AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
-AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
-
-
 def convert_value_col(df_col):
     '''change data type from dollars in string to float
     '''
@@ -42,11 +38,7 @@ def units_message_str(code, units, units_change):
 def lambda_handler(event, context):
     '''runs lambda func
     '''
-    s3client = boto3.client(
-        "s3",
-        aws_access_key_id=AWS_ACCESS_KEY_ID,
-        aws_secret_access_key=AWS_SECRET_ACCESS_KEY
-        )
+    s3client = boto3.client("s3")
       
     # get SNS arn
     SNS_ARN = os.environ['SNS_ARN']
@@ -298,6 +290,7 @@ Total Equity:  {as_currency(total_equity)}
         TopicArn=SNS_ARN,
         Subject='account-balances',
         Message=message)
+
 
     return {
         'statusCode': 200,
