@@ -1,3 +1,4 @@
+import json
 import os
 import boto3
 import pandas as pd
@@ -7,14 +8,6 @@ from datetime import datetime, timedelta
 
 AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
 AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
-
-# s3client = boto3.client('s3')
-
-s3client = boto3.client(
-    "s3",
-    aws_access_key_id=AWS_ACCESS_KEY_ID,
-    aws_secret_access_key=AWS_SECRET_ACCESS_KEY
-      )
 
 
 def convert_value_col(df_col):
@@ -49,6 +42,15 @@ def units_message_str(code, units, units_change):
 def lambda_handler(event, context):
     '''runs lambda func
     '''
+    s3client = boto3.client(
+        "s3",
+        aws_access_key_id=AWS_ACCESS_KEY_ID,
+        aws_secret_access_key=AWS_SECRET_ACCESS_KEY
+        )
+      
+    # get SNS arn
+    SNS_ARN = os.environ['SNS_ARN']
+
     # create cmc df
     df_cmc = pd.DataFrame(columns=["snapshot_date","Account Number","Account Name","Code","Last","Currency",
                                     "FX Rate","CHESS holdings","Collateral","Recent buys","Recent sells",
