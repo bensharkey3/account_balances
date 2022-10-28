@@ -59,20 +59,6 @@ Resources:
               - "AccountBalancesTransformLambda"
               - "Arn"
           Id: "AccountBalancesTransformLambda"
-
-  ScheduledRuleReporting: 
-    Type: AWS::Events::Rule
-    Properties: 
-      Description: "ScheduledRuleReporting"
-      ScheduleExpression: "cron(50 7 ? * MON-FRI *)"
-      State: "ENABLED"
-      Targets: 
-        - 
-          Arn: 
-            Fn::GetAtt: 
-              - "AccountBalancesReportingLambda"
-              - "Arn"
-          Id: "AccountBalancesReportingLambda"
           
   PermissionForEventsToInvokeTransformLambda: 
     Type: AWS::Lambda::Permission
