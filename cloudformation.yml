@@ -49,6 +49,7 @@ Resources:
   ScheduledRuleTransform: 
     Type: AWS::Events::Rule
     Properties: 
+      Name: !Sub "ScheduledRuleTransform-${Environment}"
       Description: "ScheduledRuleTransform"
       ScheduleExpression: "cron(40 7 ? * MON-FRI *)"
       State: "ENABLED"
@@ -59,11 +60,26 @@ Resources:
               - "AccountBalancesTransformLambda"
               - "Arn"
           Id: "AccountBalancesTransformLambda"
+
+  ScheduledRuleReporting: 
+    Type: AWS::Events::Rule
+    Properties: 
+      Name: !Sub "ScheduledRuleReporting-${Environment}"
+      Description: "ScheduledRuleReporting"
+      ScheduleExpression: "cron(40 7 ? * MON-FRI *)"
+      State: "ENABLED"
+      Targets: 
+        - 
+          Arn: 
+            Fn::GetAtt: 
+              - "AccountBalancesReportingLambda"
+              - "Arn"
+          Id: "AccountBalancesReportingLambda"
           
   PermissionForEventsToInvokeTransformLambda: 
     Type: AWS::Lambda::Permission
     Properties: 
-      FunctionName: !Ref "AccountBalancesTransformLambda"
+      FunctionName: !Ref "AccountBalancesTransformLambda-${Environment}"
       Action: "lambda:InvokeFunction"
       Principal: "events.amazonaws.com"
       SourceArn: 
@@ -74,7 +90,7 @@ Resources:
   PermissionForEventsToInvokeReportingLambda: 
     Type: AWS::Lambda::Permission
     Properties: 
-      FunctionName: !Ref "AccountBalancesReportingLambda"
+      FunctionName: !Ref "AccountBalancesReportingLambda-${Environment}"
       Action: "lambda:InvokeFunction"
       Principal: "events.amazonaws.com"
       SourceArn: 
