@@ -7,7 +7,7 @@ Parameters:
     Default: dev
     AllowedValues:
       - dev
-      - prod
+      - prd
     Description: Enter dev or prd. Default is dev.
 
 Resources:
