@@ -290,3 +290,10 @@ Total Equity:  {as_currency(total_equity)}
 '''
 
 message = message.replace("\n\n\n\n\n", "\n\n").replace("\n\n\n\n", "\n\n").replace("\n\n\n", "\n\n")
+
+# send email using SNS
+snsclient = boto3.client('sns')
+response = snsclient.publish(
+    TopicArn=SNS_ARN,
+    Subject='account-balances',
+    Message=message)
