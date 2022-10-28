@@ -79,7 +79,7 @@ Resources:
   PermissionForEventsToInvokeTransformLambda: 
     Type: AWS::Lambda::Permission
     Properties: 
-      FunctionName: !Ref "AccountBalancesTransformLambda-${Environment}"
+      FunctionName: !Ref "PermissionTransformLambda-${Environment}"
       Action: "lambda:InvokeFunction"
       Principal: "events.amazonaws.com"
       SourceArn: 
@@ -90,7 +90,7 @@ Resources:
   PermissionForEventsToInvokeReportingLambda: 
     Type: AWS::Lambda::Permission
     Properties: 
-      FunctionName: !Ref "AccountBalancesReportingLambda-${Environment}"
+      FunctionName: !Ref "PermissionReportingLambda-${Environment}"
       Action: "lambda:InvokeFunction"
       Principal: "events.amazonaws.com"
       SourceArn: 
@@ -101,6 +101,7 @@ Resources:
   SNSTopicEmail:
     Type: AWS::SNS::Topic
     Properties:
+      DisplayName: !Ref "SNSTopicEmail-${Environment}"
       Subscription:
         - Endpoint: "bensharkey3@gmail.com"
           Protocol: "email"
