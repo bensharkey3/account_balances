@@ -10,7 +10,7 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
 
 
-URL_NAB = os.environ['URL_NAB']
+URL_NAB = "https://equitylending.nab.com.au/Login.aspx"
 USERNAME_NAB = os.environ['USERNAME_NAB']
 PASSWORD_NAB = os.environ['PASSWORD_NAB']
 
