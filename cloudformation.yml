@@ -27,7 +27,7 @@ Resources:
       Description: !Sub "runs a lambda for account-balances-nab in ${Environment} environment"
       Runtime: python3.8
       Handler: scraper_nabeb_lambda_function.lambda_handler
-      Timeout: 600
+      Timeout: 300
       Role: arn:aws:iam::537808241319:role/service-role/account_balances_scraper_role
       Code:
         S3Bucket: lambda-cloudformation-sourcecode-bucket
@@ -47,7 +47,7 @@ Resources:
       Description: !Sub "runs a lambda for account-balances-cmc in ${Environment} environment"
       Runtime: python3.8
       Handler: scraper_cmc_lambda_function.lambda_handler
-      Timeout: 600
+      Timeout: 300
       Role: arn:aws:iam::537808241319:role/service-role/account_balances_scraper_role
       Code:
         S3Bucket: lambda-cloudformation-sourcecode-bucket
@@ -67,7 +67,7 @@ Resources:
       Description: !Sub "runs a lambda for account-balances-transform in ${Environment} environment"
       Runtime: python3.8
       Handler: transform_lambda_function.lambda_handler
-      Timeout: 600
+      Timeout: 300
       Role: arn:aws:iam::537808241319:role/service-role/account_balances_scraper_role
       Code:
         S3Bucket: lambda-cloudformation-sourcecode-bucket
@@ -83,7 +83,7 @@ Resources:
       Description: !Sub "runs a lambda for account-balances-reporting in ${Environment} environment"
       Runtime: python3.8
       Handler: reporting_lambda_function.lambda_handler
-      Timeout: 600
+      Timeout: 300
       Role: arn:aws:iam::537808241319:role/service-role/account_balances_scraper_role
       Code:
         S3Bucket: lambda-cloudformation-sourcecode-bucket
