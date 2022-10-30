@@ -9,8 +9,57 @@ Parameters:
       - dev
       - prd
     Description: Enter dev or prd. Default is dev.
+  UsernameNAB:
+    Type: String
+    Description: Enter username for NAB login
+  UsernameCMC:
+    Type: String
+    Description: Enter username for CMC login
+  PasswordNABCMC:
+    Type: String
+    Description: Enter username for NAB & CMC logins
 
 Resources:
+  AccountBalancesNABLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub account-balances-nab-${Environment}
+      Description: !Sub "runs a lambda for account-balances-nab in ${Environment} environment"
+      Runtime: python3.8
+      Handler: scraper_nabeb_lambda_function.lambda_handler
+      Timeout: 600
+      Role: arn:aws:iam::537808241319:role/service-role/account_balances_scraper_role
+      Code:
+        S3Bucket: lambda-cloudformation-sourcecode-bucket
+        S3Key: "account-balances/scraper_nabeb_lambda_function.zip"
+      Layers: 
+        - "arn:aws:lambda:ap-southeast-2:537808241319:layer:headless_chrome:1"
+        - "arn:aws:lambda:ap-southeast-2:537808241319:layer:pytz:1"
+      Environment:
+        Variables: 
+          USERNAME_NAB: !Sub "${UsernameNAB}"
+          PASSWORD_NAB: !Sub "${PasswordNABCMC}"
+
+  AccountBalancesCMCLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub account-balances-cmc-${Environment}
+      Description: !Sub "runs a lambda for account-balances-cmc in ${Environment} environment"
+      Runtime: python3.8
+      Handler: scraper_cmc_lambda_function.lambda_handler
+      Timeout: 600
+      Role: arn:aws:iam::537808241319:role/service-role/account_balances_scraper_role
+      Code:
+        S3Bucket: lambda-cloudformation-sourcecode-bucket
+        S3Key: "account-balances/scraper_cmc_lambda_function.zip"
+      Layers: 
+        - "arn:aws:lambda:ap-southeast-2:537808241319:layer:headless_chrome:1"
+        - "arn:aws:lambda:ap-southeast-2:537808241319:layer:pytz:1"
+      Environment:
+        Variables: 
+          USERNAME_CMC: !Sub "${UsernameCMC}"
+          PASSWORD_CMC: !Sub "${PasswordNABCMC}"
+
   AccountBalancesTransformLambda:
     Type: AWS::Lambda::Function
     Properties:
@@ -46,12 +95,42 @@ Resources:
         Variables: 
           SNS_ARN: !Ref "SNSTopicEmail"
 
+  ScheduledRuleNAB: 
+    Type: AWS::Events::Rule
+    Properties: 
+      Name: !Sub "ScheduledRuleNAB-${Environment}"
+      Description: "ScheduledRuleNAB"
+      ScheduleExpression: "cron(30 6 ? * MON-FRI *)"
+      State: "ENABLED"
+      Targets: 
+        - 
+          Arn: 
+            Fn::GetAtt: 
+              - "AccountBalancesNABLambda"
+              - "Arn"
+          Id: "AccountBalancesNABLambda"
+
+  ScheduledRuleCMC: 
+    Type: AWS::Events::Rule
+    Properties: 
+      Name: !Sub "ScheduledRuleCMC-${Environment}"
+      Description: "ScheduledRuleCMC"
+      ScheduleExpression: "cron(30 6 ? * MON-FRI *)"
+      State: "ENABLED"
+      Targets: 
+        - 
+          Arn: 
+            Fn::GetAtt: 
+              - "AccountBalancesCMCLambda"
+              - "Arn"
+          Id: "AccountBalancesCMCLambda"
+
   ScheduledRuleTransform: 
     Type: AWS::Events::Rule
     Properties: 
       Name: !Sub "ScheduledRuleTransform-${Environment}"
       Description: "ScheduledRuleTransform"
-      ScheduleExpression: "cron(05 7 ? * MON-FRI *)"
+      ScheduleExpression: "cron(35 6 ? * MON-FRI *)"
       State: "ENABLED"
       Targets: 
         - 
@@ -66,7 +145,7 @@ Resources:
     Properties: 
       Name: !Sub "ScheduledRuleReporting-${Environment}"
       Description: "ScheduledRuleReporting"
-      ScheduleExpression: "cron(10 7 ? * MON-FRI *)"
+      ScheduleExpression: "cron(40 6 ? * MON-FRI *)"
       State: "ENABLED"
       Targets: 
         - 
@@ -76,6 +155,28 @@ Resources:
               - "Arn"
           Id: "AccountBalancesReportingLambda"
           
+  PermissionForEventsToInvokeNABLambda: 
+    Type: AWS::Lambda::Permission
+    Properties: 
+      FunctionName: !Ref "AccountBalancesNABLambda"
+      Action: "lambda:InvokeFunction"
+      Principal: "events.amazonaws.com"
+      SourceArn: 
+        Fn::GetAtt: 
+          - "ScheduledRuleNAB"
+          - "Arn"
+
+  PermissionForEventsToInvokeCMCLambda: 
+    Type: AWS::Lambda::Permission
+    Properties: 
+      FunctionName: !Ref "AccountBalancesCMCLambda"
+      Action: "lambda:InvokeFunction"
+      Principal: "events.amazonaws.com"
+      SourceArn: 
+        Fn::GetAtt: 
+          - "ScheduledRuleCMC"
+          - "Arn"
+
   PermissionForEventsToInvokeTransformLambda: 
     Type: AWS::Lambda::Permission
     Properties: 
