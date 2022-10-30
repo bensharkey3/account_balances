@@ -49,7 +49,7 @@ Resources:
       Runtime: python3.8
       Handler: scraper_cmc_lambda_function.lambda_handler
       Timeout: 300
-      MemorySize: 512
+      MemorySize: 600
       Role: arn:aws:iam::537808241319:role/service-role/account_balances_scraper_role
       Code:
         S3Bucket: lambda-cloudformation-sourcecode-bucket
