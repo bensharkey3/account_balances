@@ -12,8 +12,8 @@ import datetime
 
 
 URL_CMC = "https://www.cmcmarketsstockbroking.com.au/"
-USERNAME = os.environ['USERNAME']
-PASSWORD = os.environ['PASSWORD']
+USERNAME_CMC = os.environ['USERNAME']
+PASSWORD_CMC = os.environ['PASSWORD']
 
 
 def lambda_handler(event, context):
