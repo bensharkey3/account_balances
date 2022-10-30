@@ -12,8 +12,8 @@ import datetime
 
 
 URL_CMC = "https://www.cmcmarketsstockbroking.com.au/"
-USERNAME_CMC = os.environ['USERNAME']
-PASSWORD_CMC = os.environ['PASSWORD']
+USERNAME_CMC = os.environ['USERNAME_CMC']
+PASSWORD_CMC = os.environ['PASSWORD_CMC']
 
 
 def lambda_handler(event, context):
@@ -26,11 +26,11 @@ def lambda_handler(event, context):
 
     # enter username
     input_username = driver.find_element(by=By.ID, value='logonAccount')
-    input_username.send_keys(USERNAME)
+    input_username.send_keys(USERNAME_CMC)
 
     # enter password
     input_password = driver.find_element(by=By.ID, value='logonPassword')
-    input_password.send_keys(PASSWORD)
+    input_password.send_keys(PASSWORD_CMC)
 
     # click login
     login_button = driver.find_element(by=By.ID, value='loginButton')
